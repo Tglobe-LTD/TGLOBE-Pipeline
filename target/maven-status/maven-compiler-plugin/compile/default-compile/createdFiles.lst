@@ -1,4 +1,0 @@
-com\tglobe\loadlinks\controller\BookingController.class
-com\tglobe\loadlinks\service\BookingService.class
-com\tglobe\loadlinks\model\Booking.class
-com\tglobe\loadlinks\repository\BookingRepository.class

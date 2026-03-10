@@ -1,0 +1,26 @@
+# Compiled Java classes
+target/
+*.class
+
+# Log files
+*.log
+
+# Environment/OS files
+.DS_Store
+Thumbs.db
+
+# IDE Specific (VS Code / IntelliJ)
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Maven specific
+.mvn/
+mvnw
+mvnw.cmd
+
+# Kubernetes/Docker local noise
+bin/
+obj/
