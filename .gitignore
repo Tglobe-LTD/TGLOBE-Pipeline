@@ -24,3 +24,5 @@ mvnw.cmd
 # Kubernetes/Docker local noise
 bin/
 obj/
+trivy.exe
+trivy.zip
