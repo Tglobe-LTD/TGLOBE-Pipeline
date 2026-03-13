@@ -1,16 +1,10 @@
-# Stage 1: Build (Using a reliable Maven image)
-FROM maven:3.9.6-eclipse-temurin-17 AS build
+# Final Stage only - Use Java 21 runtime to match your build
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-COPY . .
-RUN mvn clean package -DskipTests
-
-# Stage 2: Runtime (Using the modern, secure Temurin Alpine image)
-FROM eclipse-temurin:17-jre-alpine
-WORKDIR /app
-# Copy only the JAR from the build stage
-COPY --from=build /app/target/*.jar tglobe-app.jar
+# Copy the JAR we will build on your Windows machine
+COPY target/*.jar tglobe-app.jar
 EXPOSE 8080
-# Run as a non-root user (Mastery Security Move)
+# Security: Run as non-root
 RUN addgroup -S tglobe && adduser -S tglobe -G tglobe
 USER tglobe
 ENTRYPOINT ["java", "-jar", "tglobe-app.jar"]

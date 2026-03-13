@@ -14,40 +14,8 @@ spec:
     spec:
       containers:
       - name: tglobe-app
-        image: tglobe-app:latest
+        image: tglobe-app:v1  # Changed from latest to v1
         imagePullPolicy: Never
         ports:
         - containerPort: 8080
-        env:
-        - name: SPRING_DATASOURCE_URL
-          value: "jdbc:postgresql://postgres-service:5432/tglobe_db"
-        - name: SPRING_DATASOURCE_USERNAME
-          value: "tglobe_user"
-        - name: SPRING_DATASOURCE_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: postgres-secret
-              key: POSTGRES_PASSWORD
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /api/v1/bookings/all
-            port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /api/v1/bookings/all
-            port: 8080
-          initialDelaySeconds: 20
-          periodSeconds: 5
-      initContainers:
-      - name: wait-for-db
-        image: busybox:1.28
-        command: ['sh', '-c', "until nc -z postgres-service 5432; do echo waiting for db; sleep 2; done"]
+        # ... rest of your config ...
