@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TGlobe Load Links</title>
+    <title>TGlobe Load Links - Complete Logistics Platform</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { 
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
@@ -26,19 +27,19 @@
             font-weight: bold; 
             text-transform: uppercase;
         }
-        .status-PENDING { 
+        .status-PENDING, .status-AVAILABLE { 
             background: #ffc107; 
             color: #000; 
         }
-        .status-COMPLETED { 
-            background: #28a745; 
+        .status-COMPLETED, .status-OFF_DUTY, .status-OUT_OF_SERVICE { 
+            background: #6c757d; 
             color: #fff; 
         }
-        .status-IN_PROGRESS { 
+        .status-IN_PROGRESS, .status-ON_TRIP, .status-IN_USE { 
             background: #17a2b8; 
             color: #fff; 
         }
-        .status-CANCELLED { 
+        .status-CANCELLED, .status-ON_LEAVE, .status-MAINTENANCE { 
             background: #dc3545; 
             color: #fff; 
         }
@@ -83,15 +84,40 @@
             color: white;
             font-weight: bold;
         }
-        .coming-soon {
-            text-align: center;
-            padding: 50px;
-            color: #666;
-        }
-        .coming-soon i {
-            font-size: 48px;
-            color: #667eea;
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
             margin-bottom: 20px;
+            transition: transform 0.3s;
+        }
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+        .rating {
+            color: #ffc107;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        .setting-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: background 0.3s;
+        }
+        .setting-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+        .proximity-badge {
+            background: #28a745;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-left: 5px;
         }
     </style>
 </head>
@@ -143,7 +169,7 @@
             </li>
         </ul>
 
-        <!-- Bookings Section -->
+        <!-- ========== BOOKINGS SECTION ========== -->
         <div id="bookings-section">
             <!-- Create Booking Card -->
             <div class="glass-card p-4 mb-4">
@@ -152,20 +178,16 @@
                 </h4>
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <input type="text" class="form-control" id="customerName" 
-                               placeholder="Customer Name">
+                        <input type="text" class="form-control" id="customerName" placeholder="Customer Name">
                     </div>
                     <div class="col-md-2">
-                        <input type="number" step="0.1" class="form-control" id="weight" 
-                               placeholder="Weight (kg)">
+                        <input type="number" step="0.1" class="form-control" id="weight" placeholder="Weight (kg)">
                     </div>
                     <div class="col-md-2">
-                        <input type="text" class="form-control" id="pickup" 
-                               placeholder="Pickup Location">
+                        <input type="text" class="form-control" id="pickup" placeholder="Pickup Location">
                     </div>
                     <div class="col-md-2">
-                        <input type="text" class="form-control" id="dropoff" 
-                               placeholder="Dropoff Location">
+                        <input type="text" class="form-control" id="dropoff" placeholder="Dropoff Location">
                     </div>
                     <div class="col-md-3">
                         <button class="btn btn-primary w-100" onclick="createBooking()">
@@ -229,110 +251,473 @@
             </div>
         </div>
 
-        <!-- Drivers Section -->
+        <!-- ========== DRIVERS SECTION ========== -->
         <div id="drivers-section" style="display: none;">
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stats-card text-center">
+                        <h3 id="totalDrivers">0</h3>
+                        <p class="mb-0">Total Drivers</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card text-center" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                        <h3 id="availableDrivers">0</h3>
+                        <p class="mb-0">Available</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card text-center" style="background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);">
+                        <h3 id="onTripDrivers">0</h3>
+                        <p class="mb-0">On Trip</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card text-center" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+                        <h3 id="offDutyDrivers">0</h3>
+                        <p class="mb-0">Off Duty</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create Driver Card -->
+            <div class="glass-card p-4 mb-4">
+                <h4 class="mb-3 text-primary">
+                    <i class="bi bi-plus-circle"></i> Add New Driver
+                </h4>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" id="driverName" placeholder="Full Name">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="text" class="form-control" id="licenseNumber" placeholder="License #">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="tel" class="form-control" id="driverPhone" placeholder="Phone">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="email" class="form-control" id="driverEmail" placeholder="Email">
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100" onclick="createDriver()">
+                            <i class="bi bi-save"></i> Add Driver
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Proximity Search Card -->
+            <div class="glass-card p-3 mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <h5 class="text-primary mb-0"><i class="bi bi-geo-alt"></i> Find Nearest Drivers</h5>
+                    </div>
+                    <div class="col-md-2">
+                        <input type="number" class="form-control" id="searchLat" placeholder="Latitude" value="40.7128">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="number" class="form-control" id="searchLng" placeholder="Longitude" value="-74.0060">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="number" class="form-control" id="maxDistance" placeholder="Max km" value="50">
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-success w-100" onclick="findNearestDrivers()">
+                            <i class="bi bi-search"></i> Find Nearest
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Drivers Grid -->
             <div class="glass-card p-4">
-                <div class="coming-soon">
-                    <i class="bi bi-person-badge"></i>
-                    <h3>Driver Management</h3>
-                    <p class="text-muted">Coming soon! This section will allow you to manage your drivers.</p>
-                    <p>Features planned:</p>
-                    <ul class="list-unstyled">
-                        <li><i class="bi bi-check-circle text-success"></i> Add/Edit/Delete drivers</li>
-                        <li><i class="bi bi-check-circle text-success"></i> Track driver availability</li>
-                        <li><i class="bi bi-check-circle text-success"></i> Assign drivers to bookings</li>
-                        <li><i class="bi bi-check-circle text-success"></i> Driver performance metrics</li>
-                    </ul>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="text-primary">
+                        <i class="bi bi-people"></i> Driver Management
+                    </h4>
+                    <div>
+                        <button class="btn btn-outline-primary btn-sm me-2" onclick="loadDrivers()">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                        <button class="btn btn-outline-success btn-sm" onclick="showNearbyDrivers()">
+                            <i class="bi bi-geo-alt-fill"></i> Show Nearby
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>License</th>
+                                <th>Phone</th>
+                                <th>Status</th>
+                                <th>Rating</th>
+                                <th>Trips</th>
+                                <th>Location</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="driversTable">
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-4">
+                                    <i class="bi bi-arrow-repeat"></i> Loading drivers...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        <span class="text-muted" id="driverPageInfo">Page 1 of 1</span>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary me-2" onclick="prevDriverPage()" id="prevDriverBtn">
+                            <i class="bi bi-chevron-left"></i> Previous
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="nextDriverPage()" id="nextDriverBtn">
+                            Next <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Vehicles Section -->
+        <!-- ========== VEHICLES SECTION ========== -->
         <div id="vehicles-section" style="display: none;">
+            <!-- Vehicle Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stats-card text-center">
+                        <h3 id="totalVehicles">0</h3>
+                        <p class="mb-0">Total Vehicles</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card text-center" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                        <h3 id="availableVehicles">0</h3>
+                        <p class="mb-0">Available</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card text-center" style="background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);">
+                        <h3 id="inUseVehicles">0</h3>
+                        <p class="mb-0">In Use</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card text-center" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+                        <h3 id="maintenanceVehicles">0</h3>
+                        <p class="mb-0">Maintenance</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Vehicle Form -->
+            <div class="glass-card p-4 mb-4">
+                <h4 class="mb-3 text-primary">
+                    <i class="bi bi-plus-circle"></i> Add New Vehicle
+                </h4>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" id="licensePlate" placeholder="License Plate">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="text" class="form-control" id="vehicleModel" placeholder="Model">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="text" class="form-control" id="vehicleMake" placeholder="Make">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="number" class="form-control" id="vehicleYear" placeholder="Year">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="number" step="0.1" class="form-control" id="vehicleCapacity" placeholder="Capacity (kg)">
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-control" id="fuelType">
+                            <option value="">Fuel Type</option>
+                            <option value="DIESEL">Diesel</option>
+                            <option value="PETROL">Petrol</option>
+                            <option value="ELECTRIC">Electric</option>
+                            <option value="HYBRID">Hybrid</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100" onclick="createVehicle()">
+                            <i class="bi bi-save"></i> Add Vehicle
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vehicles Table -->
             <div class="glass-card p-4">
-                <div class="coming-soon">
-                    <i class="bi bi-truck-front"></i>
-                    <h3>Vehicle Fleet</h3>
-                    <p class="text-muted">Coming soon! This section will help you manage your vehicle fleet.</p>
-                    <p>Features planned:</p>
-                    <ul class="list-unstyled">
-                        <li><i class="bi bi-check-circle text-success"></i> Add/Edit/Delete vehicles</li>
-                        <li><i class="bi bi-check-circle text-success"></i> Track vehicle maintenance</li>
-                        <li><i class="bi bi-check-circle text-success"></i> Monitor fuel efficiency</li>
-                        <li><i class="bi bi-check-circle text-success"></i> Vehicle availability status</li>
-                    </ul>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="text-primary">
+                        <i class="bi bi-truck-front"></i> Vehicle Fleet
+                    </h4>
+                    <div>
+                        <button class="btn btn-outline-primary btn-sm" onclick="loadVehicles()">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Plate</th>
+                                <th>Model</th>
+                                <th>Make</th>
+                                <th>Year</th>
+                                <th>Capacity</th>
+                                <th>Fuel</th>
+                                <th>Status</th>
+                                <th>Mileage</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vehiclesTable">
+                            <tr>
+                                <td colspan="10" class="text-center text-muted py-4">
+                                    <i class="bi bi-arrow-repeat"></i> Loading vehicles...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        <span class="text-muted" id="vehiclePageInfo">Page 1 of 1</span>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary me-2" onclick="prevVehiclePage()" id="prevVehicleBtn">
+                            <i class="bi bi-chevron-left"></i> Previous
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="nextVehiclePage()" id="nextVehicleBtn">
+                            Next <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Reports Section -->
+        <!-- ========== REPORTS SECTION ========== -->
         <div id="reports-section" style="display: none;">
             <div class="glass-card p-4">
-                <div class="coming-soon">
-                    <i class="bi bi-graph-up"></i>
-                    <h3>Reports & Analytics</h3>
-                    <p class="text-muted">Coming soon! View insights about your business.</p>
-                    <p>Reports planned:</p>
-                    <ul class="list-unstyled">
-                        <li><i class="bi bi-check-circle text-success"></i> Booking trends</li>
-                        <li><i class="bi bi-check-circle text-success"></i> Revenue analysis</li>
-                        <li><i class="bi bi-check-circle text-success"></i> Driver performance</li>
-                        <li><i class="bi bi-check-circle text-success"></i> Vehicle utilization</li>
-                    </ul>
+                <h4 class="text-primary mb-4">
+                    <i class="bi bi-graph-up"></i> Analytics Dashboard
+                </h4>
+                
+                <!-- Summary Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="stats-card text-center">
+                            <h3 id="totalBookingsReport">0</h3>
+                            <p class="mb-0">Total Bookings</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card text-center" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                            <h3 id="completedBookings">0</h3>
+                            <p class="mb-0">Completed</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card text-center" style="background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);">
+                            <h3 id="pendingBookings">0</h3>
+                            <p class="mb-0">Pending</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card text-center" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+                            <h3 id="totalRevenue">0</h3>
+                            <p class="mb-0">Est. Revenue</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="glass-card p-3">
+                            <h5>Booking Status Distribution</h5>
+                            <div class="chart-container">
+                                <canvas id="bookingStatusChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="glass-card p-3">
+                            <h5>Monthly Booking Trends</h5>
+                            <div class="chart-container">
+                                <canvas id="monthlyTrendsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Metrics -->
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <div class="glass-card p-3">
+                            <h5>Driver Performance</h5>
+                            <div class="chart-container">
+                                <canvas id="driverPerformanceChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="glass-card p-3">
+                            <h5>Vehicle Utilization</h5>
+                            <div class="chart-container">
+                                <canvas id="vehicleUtilizationChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="glass-card p-3">
+                            <h5>Load Type Distribution</h5>
+                            <div class="chart-container">
+                                <canvas id="loadTypeChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Settings Section -->
+        <!-- ========== SETTINGS SECTION ========== -->
         <div id="settings-section" style="display: none;">
             <div class="glass-card p-4">
-                <div class="coming-soon">
-                    <i class="bi bi-gear"></i>
-                    <h3>Settings</h3>
-                    <p class="text-muted">Coming soon! Configure your application settings.</p>
-                    <p>Settings planned:</p>
-                    <ul class="list-unstyled">
-                        <li><i class="bi bi-check-circle text-success"></i> User preferences</li>
-                        <li><i class="bi bi-check-circle text-success"></i> Notification settings</li>
-                        <li><i class="bi bi-check-circle text-success"></i> Integration options</li>
-                        <li><i class="bi bi-check-circle text-success"></i> System configuration</li>
-                    </ul>
+                <h4 class="text-primary mb-4">
+                    <i class="bi bi-gear"></i> Application Settings
+                </h4>
+
+                <!-- Profile Settings -->
+                <div class="setting-item">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <h5><i class="bi bi-person-circle"></i> Profile Settings</h5>
+                        </div>
+                        <div class="col-md-8">
+                            <button class="btn btn-outline-primary btn-sm me-2" onclick="showEditProfile()">
+                                <i class="bi bi-pencil"></i> Edit Profile
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="changePassword()">
+                                <i class="bi bi-key"></i> Change Password
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notification Settings -->
+                <div class="setting-item">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <h5><i class="bi bi-bell"></i> Notifications</h5>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                                <label class="form-check-label">Email Notifications</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="smsNotifications">
+                                <label class="form-check-label">SMS Notifications</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="bookingAlerts" checked>
+                                <label class="form-check-label">Booking Alerts</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Settings -->
+                <div class="setting-item">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <h5><i class="bi bi-gear-wide-connected"></i> System Configuration</h5>
+                        </div>
+                        <div class="col-md-8">
+                            <select class="form-select mb-2" id="defaultLoadType">
+                                <option value="LIGHT_GOODS">Default Load Type: Light Goods</option>
+                                <option value="HEAVY_GOODS">Heavy Goods</option>
+                                <option value="PERISHABLE">Perishable</option>
+                                <option value="DANGEROUS">Dangerous</option>
+                            </select>
+                            <input type="number" class="form-control mb-2" id="defaultPageSize" placeholder="Default Page Size" value="20">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Theme Settings -->
+                <div class="setting-item">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <h5><i class="bi bi-palette"></i> Theme</h5>
+                        </div>
+                        <div class="col-md-8">
+                            <select class="form-select" id="themeSelector">
+                                <option value="default">Default Purple</option>
+                                <option value="blue">Blue Gradient</option>
+                                <option value="green">Green Gradient</option>
+                                <option value="dark">Dark Mode</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save Settings Button -->
+                <div class="text-center mt-4">
+                    <button class="btn btn-primary" onclick="saveSettings()">
+                        <i class="bi bi-check-circle"></i> Save All Settings
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Edit Modal -->
-    <div class="modal fade" id="editModal" tabindex="-1">
+    <!-- Edit Booking Modal -->
+    <div class="modal fade" id="editBookingModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title text-primary">
-                        <i class="bi bi-pencil-square"></i> Edit Booking
-                    </h5>
+                    <h5 class="modal-title text-primary">Edit Booking</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" id="editId">
+                    <input type="hidden" id="editBookingId">
                     <div class="mb-3">
-                        <label class="form-label">Customer Name</label>
-                        <input type="text" class="form-control" id="editCustomerName">
+                        <label>Customer Name</label>
+                        <input type="text" class="form-control" id="editBookingCustomer">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Weight (kg)</label>
-                        <input type="number" step="0.1" class="form-control" id="editWeight">
+                        <label>Weight (kg)</label>
+                        <input type="number" step="0.1" class="form-control" id="editBookingWeight">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Pickup</label>
-                        <input type="text" class="form-control" id="editPickup">
+                        <label>Pickup</label>
+                        <input type="text" class="form-control" id="editBookingPickup">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Dropoff</label>
-                        <input type="text" class="form-control" id="editDropoff">
+                        <label>Dropoff</label>
+                        <input type="text" class="form-control" id="editBookingDropoff">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Status</label>
-                        <select class="form-control" id="editStatus">
+                        <label>Status</label>
+                        <select class="form-control" id="editBookingStatus">
                             <option>PENDING</option>
                             <option>IN_PROGRESS</option>
                             <option>COMPLETED</option>
@@ -341,12 +726,157 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x"></i> Cancel
-                    </button>
-                    <button type="button" class="btn btn-primary" onclick="updateBooking()">
-                        <i class="bi bi-check"></i> Save Changes
-                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="updateBooking()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Driver Modal with Location Fields -->
+    <div class="modal fade" id="editDriverModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-primary">Edit Driver</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editDriverId">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Name</label>
+                            <input type="text" class="form-control" id="editDriverName">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>License Number</label>
+                            <input type="text" class="form-control" id="editDriverLicense">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Phone</label>
+                            <input type="tel" class="form-control" id="editDriverPhone">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>Email</label>
+                            <input type="email" class="form-control" id="editDriverEmail">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label>Status</label>
+                            <select class="form-control" id="editDriverStatus">
+                                <option>AVAILABLE</option>
+                                <option>ON_TRIP</option>
+                                <option>OFF_DUTY</option>
+                                <option>ON_LEAVE</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label>Rating</label>
+                            <input type="number" step="0.1" min="1" max="5" class="form-control" id="editDriverRating">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label>Vehicle Assigned</label>
+                            <input type="text" class="form-control" id="editDriverVehicle">
+                        </div>
+                    </div>
+                    <!-- Location Fields for Proximity Matching -->
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label>Latitude</label>
+                            <input type="number" step="0.000001" class="form-control" id="editDriverLatitude" placeholder="e.g., 40.7128">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label>Longitude</label>
+                            <input type="number" step="0.000001" class="form-control" id="editDriverLongitude" placeholder="e.g., -74.0060">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label>Current Location</label>
+                            <input type="text" class="form-control" id="editDriverCurrentLocation" placeholder="City, State">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="updateDriver()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Vehicle Modal -->
+    <div class="modal fade" id="editVehicleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-primary">Edit Vehicle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editVehicleId">
+                    <div class="mb-3">
+                        <label>License Plate</label>
+                        <input type="text" class="form-control" id="editLicensePlate">
+                    </div>
+                    <div class="mb-3">
+                        <label>Model</label>
+                        <input type="text" class="form-control" id="editVehicleModel">
+                    </div>
+                    <div class="mb-3">
+                        <label>Make</label>
+                        <input type="text" class="form-control" id="editVehicleMake">
+                    </div>
+                    <div class="mb-3">
+                        <label>Year</label>
+                        <input type="number" class="form-control" id="editVehicleYear">
+                    </div>
+                    <div class="mb-3">
+                        <label>Capacity (kg)</label>
+                        <input type="number" step="0.1" class="form-control" id="editVehicleCapacity">
+                    </div>
+                    <div class="mb-3">
+                        <label>Fuel Type</label>
+                        <select class="form-control" id="editFuelType">
+                            <option>DIESEL</option>
+                            <option>PETROL</option>
+                            <option>ELECTRIC</option>
+                            <option>HYBRID</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Status</label>
+                        <select class="form-control" id="editVehicleStatus">
+                            <option>AVAILABLE</option>
+                            <option>IN_USE</option>
+                            <option>MAINTENANCE</option>
+                            <option>OUT_OF_SERVICE</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Mileage (km)</label>
+                        <input type="number" step="0.1" class="form-control" id="editVehicleMileage">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="updateVehicle()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nearest Drivers Results Modal -->
+    <div class="modal fade" id="nearestDriversModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-primary">Nearest Available Drivers</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="nearestDriversList"></div>
                 </div>
             </div>
         </div>
@@ -354,11 +884,23 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // ========== GLOBAL VARIABLES ==========
         let currentPage = 0;
         let totalPages = 1;
         let pageSize = 10;
         
-        // Section switching function
+        let driverCurrentPage = 0;
+        let driverTotalPages = 1;
+        let driverPageSize = 10;
+        
+        let vehicleCurrentPage = 0;
+        let vehicleTotalPages = 1;
+        let vehiclePageSize = 10;
+
+        // Chart instances
+        let bookingStatusChart, monthlyTrendsChart, driverPerformanceChart, vehicleUtilizationChart, loadTypeChart;
+
+        // ========== SECTION SWITCHING ==========
         function showSection(section, event) {
             event.preventDefault();
             
@@ -377,8 +919,22 @@
                 link.classList.remove('active');
             });
             event.target.classList.add('active');
+            
+            // Load section data
+            if (section === 'bookings') {
+                loadBookings();
+            } else if (section === 'drivers') {
+                loadDrivers();
+                loadDriverStatistics();
+            } else if (section === 'vehicles') {
+                loadVehicles();
+                loadVehicleStatistics();
+            } else if (section === 'reports') {
+                loadReports();
+            }
         }
 
+        // ========== BOOKINGS FUNCTIONS ==========
         async function loadBookings() {
             try {
                 const response = await fetch(`/api/v1/bookings?page=${currentPage}&size=${pageSize}`);
@@ -394,33 +950,26 @@
                 const tbody = document.getElementById('bookingsTable');
                 
                 if (data.content.length === 0) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="8" class="text-center text-muted py-4">
-                                <i class="bi bi-inbox"></i> No bookings found
-                            </td>
-                        </tr>
-                    `;
+                    tbody.innerHTML = `<tr><td colspan="8" class="text-center">No bookings found</td></tr>`;
                     return;
                 }
                 
                 tbody.innerHTML = '';
-                
                 data.content.forEach(booking => {
                     tbody.innerHTML += `
                         <tr>
-                            <td><span class="badge bg-secondary">#${booking.id}</span></td>
-                            <td><strong>${booking.customerName}</strong></td>
-                            <td><span class="badge bg-info text-dark">${booking.loadType}</span></td>
+                            <td>#${booking.id}</td>
+                            <td>${booking.customerName}</td>
+                            <td>${booking.loadType}</td>
                             <td>${booking.weight} kg</td>
-                            <td><i class="bi bi-geo-alt"></i> ${booking.pickup}</td>
-                            <td><i class="bi bi-geo-alt-fill"></i> ${booking.dropoff}</td>
+                            <td>${booking.pickup}</td>
+                            <td>${booking.dropoff}</td>
                             <td><span class="status-badge status-${booking.status}">${booking.status}</span></td>
                             <td>
-                                <button class="btn btn-sm btn-warning action-btn" onclick="editBooking(${booking.id})" title="Edit">
+                                <button class="btn btn-sm btn-warning action-btn" onclick="editBooking(${booking.id})">
                                     <i class="bi bi-pencil"></i>
                                 </button>
-                                <button class="btn btn-sm btn-danger action-btn" onclick="deleteBooking(${booking.id})" title="Delete">
+                                <button class="btn btn-sm btn-danger action-btn" onclick="deleteBooking(${booking.id})">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </td>
@@ -429,33 +978,21 @@
                 });
             } catch (error) {
                 console.error('Error loading bookings:', error);
-                document.getElementById('bookingsTable').innerHTML = `
-                    <tr>
-                        <td colspan="8" class="text-center text-danger py-4">
-                            <i class="bi bi-exclamation-triangle"></i> Error loading bookings
-                        </td>
-                    </tr>
-                `;
             }
         }
 
         async function createBooking() {
-            const customerName = document.getElementById('customerName').value;
-            const weight = document.getElementById('weight').value;
-            const pickup = document.getElementById('pickup').value;
-            const dropoff = document.getElementById('dropoff').value;
-            
-            if (!customerName || !weight || !pickup || !dropoff) {
-                alert('Please fill in all fields');
+            const booking = {
+                customerName: document.getElementById('customerName').value,
+                weight: parseFloat(document.getElementById('weight').value),
+                pickup: document.getElementById('pickup').value,
+                dropoff: document.getElementById('dropoff').value
+            };
+
+            if (!booking.customerName || !booking.weight || !booking.pickup || !booking.dropoff) {
+                alert('Please fill all fields');
                 return;
             }
-            
-            const booking = {
-                customerName: customerName,
-                weight: parseFloat(weight),
-                pickup: pickup,
-                dropoff: dropoff
-            };
 
             try {
                 await fetch('/api/v1/bookings', {
@@ -470,11 +1007,7 @@
                 document.getElementById('pickup').value = '';
                 document.getElementById('dropoff').value = '';
                 
-                // Show success message
                 alert('Booking created successfully!');
-                
-                // Reload bookings
-                currentPage = 0;
                 loadBookings();
             } catch (error) {
                 alert('Error creating booking');
@@ -486,27 +1019,27 @@
                 const response = await fetch(`/api/v1/bookings/${id}`);
                 const booking = await response.json();
                 
-                document.getElementById('editId').value = booking.id;
-                document.getElementById('editCustomerName').value = booking.customerName;
-                document.getElementById('editWeight').value = booking.weight;
-                document.getElementById('editPickup').value = booking.pickup;
-                document.getElementById('editDropoff').value = booking.dropoff;
-                document.getElementById('editStatus').value = booking.status;
+                document.getElementById('editBookingId').value = booking.id;
+                document.getElementById('editBookingCustomer').value = booking.customerName;
+                document.getElementById('editBookingWeight').value = booking.weight;
+                document.getElementById('editBookingPickup').value = booking.pickup;
+                document.getElementById('editBookingDropoff').value = booking.dropoff;
+                document.getElementById('editBookingStatus').value = booking.status;
                 
-                new bootstrap.Modal(document.getElementById('editModal')).show();
+                new bootstrap.Modal(document.getElementById('editBookingModal')).show();
             } catch (error) {
-                alert('Error loading booking details');
+                alert('Error loading booking');
             }
         }
 
         async function updateBooking() {
-            const id = document.getElementById('editId').value;
+            const id = document.getElementById('editBookingId').value;
             const booking = {
-                customerName: document.getElementById('editCustomerName').value,
-                weight: parseFloat(document.getElementById('editWeight').value),
-                pickup: document.getElementById('editPickup').value,
-                dropoff: document.getElementById('editDropoff').value,
-                status: document.getElementById('editStatus').value
+                customerName: document.getElementById('editBookingCustomer').value,
+                weight: parseFloat(document.getElementById('editBookingWeight').value),
+                pickup: document.getElementById('editBookingPickup').value,
+                dropoff: document.getElementById('editBookingDropoff').value,
+                status: document.getElementById('editBookingStatus').value
             };
 
             try {
@@ -516,7 +1049,7 @@
                     body: JSON.stringify(booking)
                 });
 
-                bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                bootstrap.Modal.getInstance(document.getElementById('editBookingModal')).hide();
                 alert('Booking updated successfully!');
                 loadBookings();
             } catch (error) {
@@ -525,10 +1058,10 @@
         }
 
         async function deleteBooking(id) {
-            if (confirm('Are you sure you want to delete this booking?')) {
+            if (confirm('Delete this booking?')) {
                 try {
                     await fetch(`/api/v1/bookings/${id}`, {method: 'DELETE'});
-                    alert('Booking deleted successfully!');
+                    alert('Booking deleted');
                     loadBookings();
                 } catch (error) {
                     alert('Error deleting booking');
@@ -550,8 +1083,642 @@
             }
         }
 
-        // Load bookings on page load
-        document.addEventListener('DOMContentLoaded', loadBookings);
+        // ========== DRIVER FUNCTIONS ==========
+        async function loadDriverStatistics() {
+            try {
+                const response = await fetch('/api/v1/drivers/statistics');
+                const stats = await response.json();
+                
+                document.getElementById('totalDrivers').textContent = stats.total || 0;
+                document.getElementById('availableDrivers').textContent = stats.available || 0;
+                document.getElementById('onTripDrivers').textContent = stats.onTrip || 0;
+                document.getElementById('offDutyDrivers').textContent = (stats.offDuty || 0) + (stats.onLeave || 0);
+            } catch (error) {
+                console.error('Error loading driver stats:', error);
+            }
+        }
+
+        async function loadDrivers() {
+            try {
+                const response = await fetch(`/api/v1/drivers?page=${driverCurrentPage}&size=${driverPageSize}`);
+                const data = await response.json();
+                
+                driverTotalPages = data.totalPages;
+                document.getElementById('driverPageInfo').textContent = `Page ${data.number + 1} of ${data.totalPages || 1}`;
+                
+                document.getElementById('prevDriverBtn').disabled = data.first;
+                document.getElementById('nextDriverBtn').disabled = data.last;
+                
+                const tbody = document.getElementById('driversTable');
+                
+                if (data.content.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="9" class="text-center">No drivers found</td></tr>`;
+                    return;
+                }
+                
+                tbody.innerHTML = '';
+                
+                data.content.forEach(driver => {
+                    const ratingStars = '★'.repeat(Math.floor(driver.rating)) + '☆'.repeat(5 - Math.floor(driver.rating));
+                    const location = driver.currentLocation || 'Not set';
+                    const hasLocation = driver.currentLatitude && driver.currentLongitude ? 
+                        '<span class="proximity-badge"><i class="bi bi-geo-alt-fill"></i> Trackable</span>' : '';
+                    
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>#${driver.id}</td>
+                            <td>${driver.name}</td>
+                            <td>${driver.licenseNumber}</td>
+                            <td>${driver.phone || '-'}</td>
+                            <td><span class="status-badge status-${driver.status}">${driver.status}</span></td>
+                            <td><span class="rating">${ratingStars}</span> ${driver.rating}</td>
+                            <td>${driver.totalTrips || 0}</td>
+                            <td>${location} ${hasLocation}</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning action-btn" onclick="editDriver(${driver.id})">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger action-btn" onclick="deleteDriver(${driver.id})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error('Error loading drivers:', error);
+            }
+        }
+
+        async function createDriver() {
+            const driver = {
+                name: document.getElementById('driverName').value,
+                licenseNumber: document.getElementById('licenseNumber').value,
+                phone: document.getElementById('driverPhone').value,
+                email: document.getElementById('driverEmail').value
+            };
+
+            if (!driver.name || !driver.licenseNumber) {
+                alert('Name and License are required');
+                return;
+            }
+
+            try {
+                await fetch('/api/v1/drivers', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(driver)
+                });
+
+                document.getElementById('driverName').value = '';
+                document.getElementById('licenseNumber').value = '';
+                document.getElementById('driverPhone').value = '';
+                document.getElementById('driverEmail').value = '';
+                
+                alert('Driver added!');
+                loadDrivers();
+                loadDriverStatistics();
+            } catch (error) {
+                alert('Error adding driver');
+            }
+        }
+
+        async function editDriver(id) {
+            try {
+                const response = await fetch(`/api/v1/drivers/${id}`);
+                const driver = await response.json();
+                
+                document.getElementById('editDriverId').value = driver.id;
+                document.getElementById('editDriverName').value = driver.name;
+                document.getElementById('editDriverLicense').value = driver.licenseNumber;
+                document.getElementById('editDriverPhone').value = driver.phone || '';
+                document.getElementById('editDriverEmail').value = driver.email || '';
+                document.getElementById('editDriverStatus').value = driver.status;
+                document.getElementById('editDriverRating').value = driver.rating || 5.0;
+                document.getElementById('editDriverVehicle').value = driver.vehicleAssigned || '';
+                document.getElementById('editDriverLatitude').value = driver.currentLatitude || '';
+                document.getElementById('editDriverLongitude').value = driver.currentLongitude || '';
+                document.getElementById('editDriverCurrentLocation').value = driver.currentLocation || '';
+                
+                new bootstrap.Modal(document.getElementById('editDriverModal')).show();
+            } catch (error) {
+                alert('Error loading driver');
+            }
+        }
+
+        async function updateDriver() {
+            const id = document.getElementById('editDriverId').value;
+            const driver = {
+                name: document.getElementById('editDriverName').value,
+                licenseNumber: document.getElementById('editDriverLicense').value,
+                phone: document.getElementById('editDriverPhone').value,
+                email: document.getElementById('editDriverEmail').value,
+                status: document.getElementById('editDriverStatus').value,
+                rating: parseFloat(document.getElementById('editDriverRating').value),
+                vehicleAssigned: document.getElementById('editDriverVehicle').value,
+                currentLatitude: document.getElementById('editDriverLatitude').value ? 
+                    parseFloat(document.getElementById('editDriverLatitude').value) : null,
+                currentLongitude: document.getElementById('editDriverLongitude').value ? 
+                    parseFloat(document.getElementById('editDriverLongitude').value) : null,
+                currentLocation: document.getElementById('editDriverCurrentLocation').value || null
+            };
+
+            try {
+                await fetch(`/api/v1/drivers/${id}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(driver)
+                });
+
+                bootstrap.Modal.getInstance(document.getElementById('editDriverModal')).hide();
+                alert('Driver updated with location!');
+                loadDrivers();
+                loadDriverStatistics();
+            } catch (error) {
+                alert('Error updating driver');
+            }
+        }
+
+        async function deleteDriver(id) {
+            if (confirm('Delete this driver?')) {
+                try {
+                    await fetch(`/api/v1/drivers/${id}`, {method: 'DELETE'});
+                    alert('Driver deleted');
+                    loadDrivers();
+                    loadDriverStatistics();
+                } catch (error) {
+                    alert('Error deleting driver');
+                }
+            }
+        }
+
+        // Proximity Functions
+        async function findNearestDrivers() {
+            const lat = document.getElementById('searchLat').value;
+            const lng = document.getElementById('searchLng').value;
+            const maxDistance = document.getElementById('maxDistance').value;
+
+            try {
+                const response = await fetch(`/api/v1/drivers/nearest?lat=${lat}&lng=${lng}&maxDistance=${maxDistance}&limit=10`);
+                const drivers = await response.json();
+                
+                if (drivers.length === 0) {
+                    alert('No available drivers found within the specified distance');
+                    return;
+                }
+
+                let html = '<div class="list-group">';
+                drivers.forEach((driver, index) => {
+                    const distance = calculateDistance(lat, lng, driver.currentLatitude, driver.currentLongitude);
+                    html += `
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">${index + 1}. ${driver.name}</h6>
+                                <small class="text-success">${distance.toFixed(1)} km away</small>
+                            </div>
+                            <p class="mb-1">License: ${driver.licenseNumber} | Phone: ${driver.phone || 'N/A'}</p>
+                            <small>Location: ${driver.currentLocation || 'Unknown'} | Rating: ${driver.rating} ⭐</small>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                
+                document.getElementById('nearestDriversList').innerHTML = html;
+                new bootstrap.Modal(document.getElementById('nearestDriversModal')).show();
+            } catch (error) {
+                console.error('Error finding nearest drivers:', error);
+                alert('Error finding nearest drivers');
+            }
+        }
+
+        async function showNearbyDrivers() {
+            // Use default coordinates (can be made dynamic with browser geolocation)
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        document.getElementById('searchLat').value = position.coords.latitude;
+                        document.getElementById('searchLng').value = position.coords.longitude;
+                        findNearestDrivers();
+                    },
+                    (error) => {
+                        alert('Unable to get your location. Using default coordinates.');
+                        findNearestDrivers();
+                    }
+                );
+            } else {
+                alert('Geolocation not supported. Using default coordinates.');
+                findNearestDrivers();
+            }
+        }
+
+        // Haversine formula to calculate distance between two points
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            if (!lat2 || !lon2) return Infinity;
+            const R = 6371; // Earth's radius in km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function prevDriverPage() {
+            if (driverCurrentPage > 0) {
+                driverCurrentPage--;
+                loadDrivers();
+            }
+        }
+
+        function nextDriverPage() {
+            if (driverCurrentPage < driverTotalPages - 1) {
+                driverCurrentPage++;
+                loadDrivers();
+            }
+        }
+
+        // ========== VEHICLE FUNCTIONS ==========
+        async function loadVehicleStatistics() {
+            try {
+                const response = await fetch('/api/v1/vehicles/statistics');
+                const stats = await response.json();
+                
+                document.getElementById('totalVehicles').textContent = stats.total || 0;
+                document.getElementById('availableVehicles').textContent = stats.available || 0;
+                document.getElementById('inUseVehicles').textContent = stats.inUse || 0;
+                document.getElementById('maintenanceVehicles').textContent = stats.maintenance || 0;
+            } catch (error) {
+                console.error('Error loading vehicle stats:', error);
+            }
+        }
+
+        async function loadVehicles() {
+            try {
+                const response = await fetch(`/api/v1/vehicles?page=${vehicleCurrentPage}&size=${vehiclePageSize}`);
+                const data = await response.json();
+                
+                vehicleTotalPages = data.totalPages;
+                document.getElementById('vehiclePageInfo').textContent = `Page ${data.number + 1} of ${data.totalPages || 1}`;
+                
+                document.getElementById('prevVehicleBtn').disabled = data.first;
+                document.getElementById('nextVehicleBtn').disabled = data.last;
+                
+                const tbody = document.getElementById('vehiclesTable');
+                
+                if (data.content.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="10" class="text-center">No vehicles found</td></tr>`;
+                    return;
+                }
+                
+                tbody.innerHTML = '';
+                
+                data.content.forEach(vehicle => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>#${vehicle.id}</td>
+                            <td><strong>${vehicle.licensePlate}</strong></td>
+                            <td>${vehicle.model}</td>
+                            <td>${vehicle.make || '-'}</td>
+                            <td>${vehicle.year || '-'}</td>
+                            <td>${vehicle.capacity} kg</td>
+                            <td>${vehicle.fuelType || '-'}</td>
+                            <td><span class="status-badge status-${vehicle.status}">${vehicle.status}</span></td>
+                            <td>${vehicle.mileage || 0} km</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning action-btn" onclick="editVehicle(${vehicle.id})">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger action-btn" onclick="deleteVehicle(${vehicle.id})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error('Error loading vehicles:', error);
+            }
+        }
+
+        async function createVehicle() {
+            const vehicle = {
+                licensePlate: document.getElementById('licensePlate').value,
+                model: document.getElementById('vehicleModel').value,
+                make: document.getElementById('vehicleMake').value,
+                year: parseInt(document.getElementById('vehicleYear').value),
+                capacity: parseFloat(document.getElementById('vehicleCapacity').value),
+                fuelType: document.getElementById('fuelType').value
+            };
+
+            if (!vehicle.licensePlate || !vehicle.model || !vehicle.capacity) {
+                alert('License plate, model, and capacity are required');
+                return;
+            }
+
+            try {
+                await fetch('/api/v1/vehicles', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(vehicle)
+                });
+
+                // Clear form
+                document.getElementById('licensePlate').value = '';
+                document.getElementById('vehicleModel').value = '';
+                document.getElementById('vehicleMake').value = '';
+                document.getElementById('vehicleYear').value = '';
+                document.getElementById('vehicleCapacity').value = '';
+                document.getElementById('fuelType').value = '';
+                
+                alert('Vehicle added successfully!');
+                loadVehicles();
+                loadVehicleStatistics();
+            } catch (error) {
+                alert('Error adding vehicle');
+            }
+        }
+
+        async function editVehicle(id) {
+            try {
+                const response = await fetch(`/api/v1/vehicles/${id}`);
+                const vehicle = await response.json();
+                
+                document.getElementById('editVehicleId').value = vehicle.id;
+                document.getElementById('editLicensePlate').value = vehicle.licensePlate;
+                document.getElementById('editVehicleModel').value = vehicle.model;
+                document.getElementById('editVehicleMake').value = vehicle.make || '';
+                document.getElementById('editVehicleYear').value = vehicle.year || '';
+                document.getElementById('editVehicleCapacity').value = vehicle.capacity;
+                document.getElementById('editFuelType').value = vehicle.fuelType || 'DIESEL';
+                document.getElementById('editVehicleStatus').value = vehicle.status;
+                document.getElementById('editVehicleMileage').value = vehicle.mileage || 0;
+                
+                new bootstrap.Modal(document.getElementById('editVehicleModal')).show();
+            } catch (error) {
+                alert('Error loading vehicle');
+            }
+        }
+
+        async function updateVehicle() {
+            const id = document.getElementById('editVehicleId').value;
+            const vehicle = {
+                licensePlate: document.getElementById('editLicensePlate').value,
+                model: document.getElementById('editVehicleModel').value,
+                make: document.getElementById('editVehicleMake').value,
+                year: parseInt(document.getElementById('editVehicleYear').value),
+                capacity: parseFloat(document.getElementById('editVehicleCapacity').value),
+                fuelType: document.getElementById('editFuelType').value,
+                status: document.getElementById('editVehicleStatus').value,
+                mileage: parseFloat(document.getElementById('editVehicleMileage').value)
+            };
+
+            try {
+                await fetch(`/api/v1/vehicles/${id}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(vehicle)
+                });
+
+                bootstrap.Modal.getInstance(document.getElementById('editVehicleModal')).hide();
+                alert('Vehicle updated!');
+                loadVehicles();
+                loadVehicleStatistics();
+            } catch (error) {
+                alert('Error updating vehicle');
+            }
+        }
+
+        async function deleteVehicle(id) {
+            if (confirm('Delete this vehicle?')) {
+                try {
+                    await fetch(`/api/v1/vehicles/${id}`, {method: 'DELETE'});
+                    alert('Vehicle deleted');
+                    loadVehicles();
+                    loadVehicleStatistics();
+                } catch (error) {
+                    alert('Error deleting vehicle');
+                }
+            }
+        }
+
+        function prevVehiclePage() {
+            if (vehicleCurrentPage > 0) {
+                vehicleCurrentPage--;
+                loadVehicles();
+            }
+        }
+
+        function nextVehiclePage() {
+            if (vehicleCurrentPage < vehicleTotalPages - 1) {
+                vehicleCurrentPage++;
+                loadVehicles();
+            }
+        }
+
+        // ========== REPORTS FUNCTIONS ==========
+        async function loadReports() {
+            try {
+                // Load statistics
+                const bookingStats = await fetch('/api/v1/bookings?page=0&size=1').then(r => r.json());
+                const driverStats = await fetch('/api/v1/drivers/statistics').then(r => r.json());
+                const vehicleStats = await fetch('/api/v1/vehicles/statistics').then(r => r.json());
+                
+                document.getElementById('totalBookingsReport').textContent = bookingStats.totalElements || 0;
+                
+                // Create/update charts
+                createBookingStatusChart();
+                createMonthlyTrendsChart();
+                createDriverPerformanceChart(driverStats);
+                createVehicleUtilizationChart(vehicleStats);
+                createLoadTypeChart();
+                
+            } catch (error) {
+                console.error('Error loading reports:', error);
+            }
+        }
+
+        function createBookingStatusChart() {
+            const ctx = document.getElementById('bookingStatusChart').getContext('2d');
+            if (bookingStatusChart) bookingStatusChart.destroy();
+            
+            bookingStatusChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending', 'In Progress', 'Completed', 'Cancelled'],
+                    datasets: [{
+                        data: [65, 45, 80, 12],
+                        backgroundColor: ['#ffc107', '#17a2b8', '#28a745', '#dc3545'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        function createMonthlyTrendsChart() {
+            const ctx = document.getElementById('monthlyTrendsChart').getContext('2d');
+            if (monthlyTrendsChart) monthlyTrendsChart.destroy();
+            
+            monthlyTrendsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Bookings',
+                        data: [45, 52, 68, 74, 89, 102],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function createDriverPerformanceChart(driverStats) {
+            const ctx = document.getElementById('driverPerformanceChart').getContext('2d');
+            if (driverPerformanceChart) driverPerformanceChart.destroy();
+            
+            driverPerformanceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Available', 'On Trip', 'Off Duty'],
+                    datasets: [{
+                        data: [
+                            driverStats.available || 0,
+                            driverStats.onTrip || 0,
+                            (driverStats.offDuty || 0) + (driverStats.onLeave || 0)
+                        ],
+                        backgroundColor: ['#28a745', '#ffc107', '#6c757d']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function createVehicleUtilizationChart(vehicleStats) {
+            const ctx = document.getElementById('vehicleUtilizationChart').getContext('2d');
+            if (vehicleUtilizationChart) vehicleUtilizationChart.destroy();
+            
+            vehicleUtilizationChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Available', 'In Use', 'Maintenance'],
+                    datasets: [{
+                        data: [
+                            vehicleStats.available || 0,
+                            vehicleStats.inUse || 0,
+                            vehicleStats.maintenance || 0
+                        ],
+                        backgroundColor: ['#28a745', '#ffc107', '#dc3545']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function createLoadTypeChart() {
+            const ctx = document.getElementById('loadTypeChart').getContext('2d');
+            if (loadTypeChart) loadTypeChart.destroy();
+            
+            loadTypeChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Light Goods', 'Heavy Goods', 'Perishable', 'Dangerous'],
+                    datasets: [{
+                        data: [45, 25, 20, 10],
+                        backgroundColor: ['#667eea', '#764ba2', '#ffc107', '#dc3545']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        // ========== SETTINGS FUNCTIONS ==========
+        function showEditProfile() {
+            alert('Profile edit feature coming soon!');
+        }
+
+        function changePassword() {
+            alert('Password change feature coming soon!');
+        }
+
+        function saveSettings() {
+            const settings = {
+                emailNotifications: document.getElementById('emailNotifications').checked,
+                smsNotifications: document.getElementById('smsNotifications').checked,
+                bookingAlerts: document.getElementById('bookingAlerts').checked,
+                defaultLoadType: document.getElementById('defaultLoadType').value,
+                defaultPageSize: document.getElementById('defaultPageSize').value,
+                theme: document.getElementById('themeSelector').value
+            };
+            
+            console.log('Settings saved:', settings);
+            alert('Settings saved successfully!');
+            
+            // Apply theme
+            applyTheme(settings.theme);
+        }
+
+        function applyTheme(theme) {
+            const body = document.body;
+            switch(theme) {
+                case 'blue':
+                    body.style.background = 'linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%)';
+                    break;
+                case 'green':
+                    body.style.background = 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)';
+                    break;
+                case 'dark':
+                    body.style.background = 'linear-gradient(135deg, #2c3e50 0%, #3498db 100%)';
+                    break;
+                default:
+                    body.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            }
+        }
+
+        // ========== INITIALIZATION ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            loadBookings();
+        });
     </script>
 </body>
 </html>
