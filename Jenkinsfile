@@ -75,7 +75,7 @@ pipeline {
         
         // Kubernetes
         K8S_NAMESPACE = "${APP_NAME}-${params.ENVIRONMENT}"
-        K8S_DEPLOYMENT = APP_NAME
+        K8S_DEPLOYMENT = K8S_DEPLOYMENT = "${APP_NAME}"
         // ====================================================
         
         // Jenkins credentials IDs - 📝 VERIFY these exist in Jenkins
