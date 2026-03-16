@@ -8,7 +8,6 @@ pipeline {
     triggers {
         pollSCM('* * * * *')
     }
-
     parameters {
         choice(
             name: 'DEPLOYMENT_TYPE',
@@ -369,5 +368,4 @@ def getTestUrl(env, deploymentType) {
             default: return 'localhost:8080'
         }
     }
-}
 }
