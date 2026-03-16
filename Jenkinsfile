@@ -49,8 +49,8 @@ pipeline {
         
         // Tomcat Servers - UPDATE THESE WITH YOUR SERVERS
         TOMCAT_DEV = 'ubuntu@35.183.246.53:22'        // e.g., 'tomcat@192.168.1.100:22'
-        TOMCAT_STAGING = 'ubuntu@staging-server:22'
-        TOMCAT_PROD = 'ubuntu@prod-server:22'
+        TOMCAT_STAGING = 'ubuntu@35.183.246.53:22'
+        TOMCAT_PROD = 'ubuntu@35.183.246.53:22'
         TOMCAT_WEBAPPS = '/opt/tomcat/webapps'
         TOMCAT_MANAGER_URL = 'http://35.183.246.53:8080/manager/text'  // Your Tomcat manager
         
