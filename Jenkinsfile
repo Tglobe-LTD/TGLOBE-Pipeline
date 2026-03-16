@@ -37,7 +37,7 @@ pipeline {
         CONTEXT_PATH = "${APP_NAME}-${ARTIFACT_VERSION}"  // Will deploy as /loadlinks-1.0.0
         
         // Git Repository - Your application code repo
-        GIT_REPO_URL = 'https://github.com/Tglobe-LTD/TGLOBE-Pipeline.git'  // ← UPDATE THIS
+        GIT_REPO_URL = 'https://github.com/Tglobe-LTD/TGLOBE-LOAD-LINKS.git'  // ← UPDATE THIS
         GIT_BRANCH = 'master'  // or 'master'
         GIT_CREDENTIALS_ID = 'terrybright80'
         
