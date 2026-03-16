@@ -38,7 +38,7 @@ pipeline {
         
         // Git Repository - Your application code repo
         GIT_REPO_URL = 'https://github.com/Tglobe-LTD/TGLOBE-Pipeline.git'  // ← UPDATE THIS
-        GIT_BRANCH = 'main'  // or 'master'
+        GIT_BRANCH = 'master'  // or 'master'
         GIT_CREDENTIALS_ID = 'terrybright80'
         
         // SonarQube
