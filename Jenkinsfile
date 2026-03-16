@@ -301,6 +301,7 @@ EOF
                 }
             }
         }
+    }
 
 stage('Smoke Tests') {
     when {
