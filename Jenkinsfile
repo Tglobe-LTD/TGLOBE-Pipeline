@@ -56,7 +56,7 @@ pipeline {
         
         // Jenkins Credentials
         TOMCAT_SSH_CREDENTIALS = 'tomcat-ssh-key'
-        TOMCAT_MANAGER_CREDS = 'tomcat-manager-credentials'
+        TOMCAT_MANAGER_CREDS = 'tomcat-manager-credentials' //TOMCAT_MANAGER_CREDS = 'tomcat-manager-credentials'  // Must match exactly
     }
 
     stages {
